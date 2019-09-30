@@ -1,0 +1,17 @@
+version: "3.3"
+
+networks:
+  appnet:
+
+services:
+  watchtower:
+    image: containrrr/watchtower
+    command: --label-enable --debug
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    # environment:
+    networks:
+      - appnet
+    labels:
+      - "traefik.enable=false"
+      - "com.centurylinklabs.watchtower.enable=true"

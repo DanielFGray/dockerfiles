@@ -1,0 +1,18 @@
+version: '3'
+
+networks:
+  appnet:
+
+services:
+  tainer:
+    image: portainer/portainer:latest
+    command: -H unix:///var/run/docker.sock
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=host(`tainer.dfg.rocks`)"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+    networks:
+      - appnet
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./volumes/data:/data

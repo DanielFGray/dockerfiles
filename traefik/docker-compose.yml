@@ -1,0 +1,50 @@
+version: "3.3"
+
+networks:
+  appnet:
+    external: true
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--api.debug=true"
+      - "--log.level=info"
+      - "--accesslog=true"
+      - "--providers.docker=true"
+      - "--providers.docker.network=appnet"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.useBindPortIP=false"
+      - '--providers.docker.defaultRule=Host(`{{ normalize .Name  }}.dfg.rocks`)'
+      - "--global.sendAnonymousUsage"
+      - "--entryPoints.web.address=:80"
+      # - "--entryPoints.insecure.address=:80"
+      # - "--entryPoints.web.address=:443"
+      # - "--certificatesResolvers.mydnschallenge.acme.httpChallenge.entryPoint=insecure"
+      # - "--certificatesresolvers.mydnschallenge.acme.dnschallenge.provider=linodev4"
+      # - "--certificatesresolvers.mydnschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      # - "--certificatesResolvers.mydnschallenge.acme.dnsChallenge.delayBeforeCheck=1500"
+      # - "--certificatesresolvers.mydnschallenge.acme.email=danielfgray@gmail.com"
+      # - "--certificatesresolvers.mydnschallenge.acme.storage=/etc/traefik/acme/acme.json"
+    environment:
+      - "LINODE_TOKEN="
+    networks:
+      - appnet
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./acme:/etc/traefik/acme
+      - ./admins:/etc/traefik/admins
+    ports:
+      - 80:80
+      - 443:443
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`dash.dfg.rocks`)"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.traefik.basicauth.usersfile=/etc/traefik/admins"
+      # - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
