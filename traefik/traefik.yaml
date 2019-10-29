@@ -1,0 +1,39 @@
+global:
+  sendanonymoususage: true
+
+api:
+  dashboard: true
+  insecure: true
+  debug: true
+
+log:
+  level: info
+accesslog: true
+
+providers:
+  docker:
+    network: appnet
+    exposedByDefault: false
+    useBindPortIp: false
+    defaultRule: Host(`{{ normalize .Name  }}.dfg.rocks`)
+    # defaultRule: Host(`{{ index .Labels "traefik.subdomain" }}.dfg.rocks`)
+
+entrypoints:
+  insecure:
+    address: :80
+  web:
+    address: :443
+    # address: :80
+
+certificatesResolvers:
+  mydnschallenge:
+    acme:
+      # caserver: https://acme-staging-v02.api.letsencrypt.org/directory
+      httpchallenge:
+        entryPoint: insecure
+      dnschallenge:
+        provider: linodev4
+      dnsChallenge:
+        delayBeforeCheck: 1
+      email: danielfgray@gmail.com
+      storage: /etc/traefik/acme/acme.json

@@ -2,6 +2,7 @@ version: "3.3"
 
 networks:
   appnet:
+    external: true
 
 services:
   pg:
@@ -26,20 +27,23 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.pgweb.rule=Host(`supersekrit.dfg.rocks`)"
       - "traefik.http.services.pgweb.loadbalancer.server.port=8081"
+      - "traefik.http.routers.pgweb.entrypoints=web"
+      - "traefik.http.routers.pgweb.tls.certresolver=mydnschallenge"
+      - "traefik.http.middlewares.blog.redirectscheme.scheme=https"
     networks:
       - appnet
 
   gitea:
     image: gitea/gitea:latest
-    # container_name: gitea
-    command: gitea web --config /etc/app.ini
+    container_name: gitea
+    command: gitea web --config /etc/gitea/app.ini
     # user: git
     depends_on:
       - pg
     environment:
       - USER_UID=1001
       - USER_GID=1003
-      - ROOT_URL=http://git.dfg.rocks
+      - ROOT_URL=https://git.dfg.rocks
       - SSH_DOMAIN=dfg.rocks
       - SSH_PORT=22
       - SSH_LISTEN_PORT=122
@@ -54,9 +58,10 @@ services:
       - "traefik.http.routers.gitea.rule=Host(`git.dfg.rocks`)"
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
       - "traefik.http.routers.gitea.entrypoints=web"
+      - "traefik.http.routers.gitea.tls.certresolver=mydnschallenge"
     volumes:
       - ./volumes/gitea:/data
-      - ./gitea.ini:/etc/app.ini
+      - ./gitea:/etc/gitea
     ports:
       - '122:22'
     networks:
@@ -78,11 +83,11 @@ services:
       - DRONE_AGENTS_ENABLED=true
       - DRONE_GITEA_CLIENT_ID=
       - DRONE_GITEA_CLIENT_SECRET=
-      - DRONE_GITEA_SERVER=http://git.dfg.rocks
+      - DRONE_GITEA_SERVER=https://git.dfg.rocks
       - DRONE_GIT_ALWAYS_AUTH=true
       - DRONE_RPC_SECRET=
       - DRONE_SERVER_HOST=drone.dfg.rocks
-      - DRONE_SERVER_PROTO=http
+      - DRONE_SERVER_PROTO=https
       - DRONE_USER_CREATE=username:dan,machine:false,admin:true
       - DRONE_DATABASE_DRIVER=postgres
       - DRONE_DATABASE_DATASOURCE=postgres://drone@pg:5432/drone?sslmode=disable
@@ -92,6 +97,7 @@ services:
       - "traefik.http.routers.drone.rule=Host(`drone.dfg.rocks`)"
       - "traefik.http.services.drone.loadbalancer.server.port=80"
       - "traefik.http.routers.drone.entrypoints=web"
+      - "traefik.http.routers.drone.tls.certresolver=mydnschallenge"
     ports:
       - 9000:9000
     networks:
@@ -111,7 +117,7 @@ services:
       - DRONE_DEBUG=true
       - DRONE_LOGS_TRACE=true
       - DRONE_RPC_HOST=drone.dfg.rocks
-      - DRONE_RPC_PROTO=http
+      - DRONE_RPC_PROTO=https
       - DRONE_RPC_DUMP_HTTP=true
       - DRONE_RPC_SECRET=
       - DRONE_RPC_SKIP_VERIFY=false

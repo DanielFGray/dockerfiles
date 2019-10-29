@@ -6,7 +6,8 @@ networks:
 services:
   watchtower:
     image: containrrr/watchtower
-    command: --label-enable --debug
+    command: --label-enable
+    container_name: watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     # environment:
